@@ -12,27 +12,33 @@ import DronelinkCore
 import DronelinkCoreUI
 import DronelinkParrot
 import GroundSdk
+import MaterialComponents.MaterialPalettes
 
-public class ParrotDashboardViewController: UIViewController {
-    public static func create(droneSessionManager: DroneSessionManager) -> ParrotDashboardViewController {
+open class ParrotDashboardViewController: UIViewController {
+    public static func create(droneSessionManager: DroneSessionManager, mapCredentialsKey: String) -> ParrotDashboardViewController {
         let dashboardViewController = ParrotDashboardViewController()
+        dashboardViewController.mapCredentialsKey = mapCredentialsKey
         dashboardViewController.modalPresentationStyle = .fullScreen
         dashboardViewController.droneSessionManager = droneSessionManager
         return dashboardViewController
     }
     
     private var droneSessionManager: DroneSessionManager!
-    private var session: DroneSession?
+    public var session: DroneSession?
     private var missionExecutor: MissionExecutor?
-    private var mapViewController: MapViewController!
+    private var mapViewController: UIViewController!
+    private var mapCredentialsKey = ""
     private let primaryViewToggleButton = UIButton(type: .custom)
+    private let mapMoreButton = UIButton(type: .custom)
     private let dismissButton = UIButton(type: .custom)
+    private let statusLabel = UILabel()
+    private let batteryLabel = UILabel()
     private var videoPreviewerView = StreamView(frame: CGRect.zero)
     private let topBarBackgroundView = UIView()
     
     private var telemetryViewController: TelemetryViewController?
     private var missionViewController: MissionViewController?
-    private var missionExpanded = false
+    private var missionExpanded: Bool { missionViewController?.expanded ?? false }
     private var videoPreviewerPrimary = true
     private let defaultPadding = 10
     private var primaryView: UIView { return videoPreviewerPrimary || portrait ? videoPreviewerView : mapViewController.view }
@@ -41,8 +47,24 @@ public class ParrotDashboardViewController: UIViewController {
     private var tablet: Bool { return UIDevice.current.userInterfaceIdiom == .pad }
     private var statusWidgetHeight: CGFloat { return tablet ? 50 : 40 }
     
+    private let updateInterval: TimeInterval = 0.5
+    private var updateTimer: Timer?
+    
     private var streamServerRef: Ref<StreamServer>?
     private var liveStreamRef: Ref<CameraLive>?
+    
+    private var virtualSticks = false
+    private var controlSession: DroneControlSession?
+    private var takeoffLandButton = UIButton()
+    private let joystickLeftView = UIView()
+    private let joystickRightView = UIView()
+    
+    private var joystickLeftActive = false
+    private var joystickRightActive = false
+    private var vertical = 0.0
+    private var yaw = 0.0
+    private var pitch = 0.0
+    private var roll = 0.0
     
     public override var preferredStatusBarStyle: UIStatusBarStyle {
         return .lightContent
@@ -67,7 +89,27 @@ public class ParrotDashboardViewController: UIViewController {
         dismissButton.addTarget(self, action: #selector(onDismiss(sender:)), for: .touchUpInside)
         view.addSubview(dismissButton)
         
-        let mapViewController = MapViewController.create(droneSessionManager: self.droneSessionManager)
+        batteryLabel.textColor = UIColor.white
+        batteryLabel.font = UIFont.systemFont(ofSize: 16, weight: .bold)
+        view.addSubview(batteryLabel)
+        batteryLabel.snp.makeConstraints { make in
+            make.width.equalTo(50)
+            make.top.equalTo(dismissButton)
+            make.bottom.equalTo(dismissButton)
+            make.right.equalToSuperview().offset(-5)
+        }
+        
+        statusLabel.textColor = UIColor.white
+        statusLabel.font = UIFont.systemFont(ofSize: 16, weight: .bold)
+        view.addSubview(statusLabel)
+        statusLabel.snp.makeConstraints { make in
+            make.top.equalTo(dismissButton)
+            make.bottom.equalTo(dismissButton)
+            make.left.equalTo(dismissButton.snp.right).offset(5)
+            make.right.equalTo(batteryLabel.snp.left).offset(-5)
+        }
+        
+        let mapViewController = MapboxMapViewController.create(droneSessionManager: self.droneSessionManager)
         self.mapViewController = mapViewController
         addChild(mapViewController)
         view.addSubview(mapViewController.view)
@@ -78,23 +120,72 @@ public class ParrotDashboardViewController: UIViewController {
         primaryViewToggleButton.addTarget(self, action: #selector(onPrimaryViewToggle(sender:)), for: .touchUpInside)
         view.addSubview(primaryViewToggleButton)
         
+        mapMoreButton.tintColor = UIColor.white
+        mapMoreButton.setImage(DronelinkParrotUI.loadImage(named: "outline_layers_white_36pt"), for: .normal)
+        mapMoreButton.addTarget(self, action: #selector(onMapMore(sender:)), for: .touchUpInside)
+        view.addSubview(mapMoreButton)
+        
         let telemetryViewController = TelemetryViewController.create(droneSessionManager: self.droneSessionManager)
         addChild(telemetryViewController)
         view.addSubview(telemetryViewController.view)
         telemetryViewController.didMove(toParent: self)
         self.telemetryViewController = telemetryViewController
+        
+        if virtualSticks {
+            joystickLeftView.addShadow()
+            joystickLeftView.backgroundColor = DronelinkUI.Constants.overlayColor
+            view.addSubview(joystickLeftView)
+            joystickLeftView.snp.makeConstraints { make in
+                make.width.equalTo(200)
+                make.height.equalTo(200)
+                make.top.equalToSuperview().offset(50)
+                make.left.equalToSuperview().offset(50)
+            }
+            
+            joystickLeftView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(onJoystickLeftTapGesture(recognizer:))))
+            joystickLeftView.addGestureRecognizer(UIPanGestureRecognizer(target: self, action: #selector(onJoystickLeftPanGesture(recognizer:))))
+            
+            joystickRightView.addShadow()
+            joystickRightView.backgroundColor = DronelinkUI.Constants.overlayColor
+            view.addSubview(joystickRightView)
+            joystickRightView.snp.makeConstraints { make in
+                make.width.equalTo(200)
+                make.height.equalTo(200)
+                make.top.equalToSuperview().offset(50)
+                make.right.equalToSuperview().offset(-50)
+            }
+            
+            joystickRightView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(onJoystickRightTapGesture(recognizer:))))
+            joystickRightView.addGestureRecognizer(UIPanGestureRecognizer(target: self, action: #selector(onJoystickRightPanGesture(recognizer:))))
+
+            
+            takeoffLandButton.setTitle("Takeoff", for: .normal)
+            takeoffLandButton.addTarget(self, action: #selector(onTakeoffLand(sender:)), for: .touchUpInside)
+            view.addSubview(takeoffLandButton)
+            takeoffLandButton.snp.makeConstraints { make in
+                make.width.equalTo(250)
+                make.height.equalTo(35)
+                make.top.equalToSuperview()
+                make.centerX.equalToSuperview()
+            }
+        }
+        
+        updateMapMicrosoft()
     }
     
     public override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         Dronelink.shared.add(delegate: self)
         droneSessionManager?.add(delegate: self)
+        updateTimer = Timer.scheduledTimer(timeInterval: updateInterval, target: self, selector: #selector(update), userInfo: nil, repeats: true)
     }
     
     public override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
         Dronelink.shared.remove(delegate: self)
         droneSessionManager?.remove(delegate: self)
+        updateTimer?.invalidate()
+        updateTimer = nil
     }
     
     override public func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
@@ -107,17 +198,31 @@ public class ParrotDashboardViewController: UIViewController {
         view.setNeedsUpdateConstraints()
     }
     
+    @objc func update() {
+        statusLabel.text = session == nil ? "Disconnected" : session?.state?.value.location == nil ? "Telemetry Unavailable" : Dronelink.shared.missionExecutor?.engaged ?? false ? "Mission Engaged" : "Ready"
+        let statusColor = session?.state?.value.location == nil ? MDCPalette.red.accent400 : Dronelink.shared.missionExecutor?.engaged ?? false ? MDCPalette.blue.accent400 : MDCPalette.green.accent400
+        topBarBackgroundView.backgroundColor = session == nil ? DronelinkUI.Constants.overlayColor : statusColor?.withAlphaComponent(0.75)
+        batteryLabel.text = Dronelink.shared.format(formatter: "percent", value: session?.state?.value.batteryPercent)
+    }
+    
     override public func updateViewConstraints() {
         super.updateViewConstraints()
         updateConstraints()
     }
     
-    func updateConstraints() {
+    open func updateConstraints() {
         view.sendSubviewToBack(primaryView)
         view.bringSubviewToFront(secondaryView)
         view.bringSubviewToFront(primaryViewToggleButton)
+        view.bringSubviewToFront(mapMoreButton)
         if let telemetryView = telemetryViewController?.view {
             view.bringSubviewToFront(telemetryView)
+        }
+        
+        if virtualSticks {
+            view.bringSubviewToFront(takeoffLandButton)
+            view.bringSubviewToFront(joystickLeftView)
+            view.bringSubviewToFront(joystickRightView)
         }
         
         primaryView.snp.remakeConstraints { make in
@@ -159,6 +264,13 @@ public class ParrotDashboardViewController: UIViewController {
         primaryViewToggleButton.snp.remakeConstraints { make in
             make.left.equalTo(secondaryView.snp.left).offset(defaultPadding)
             make.top.equalTo(secondaryView.snp.top).offset(defaultPadding)
+            make.width.equalTo(30)
+            make.height.equalTo(30)
+        }
+        
+        mapMoreButton.snp.remakeConstraints { make in
+            make.left.equalTo(primaryViewToggleButton)
+            make.top.equalTo(portrait ? secondaryView.snp.top : primaryViewToggleButton.snp.bottom).offset(defaultPadding)
             make.width.equalTo(30)
             make.height.equalTo(30)
         }
@@ -248,8 +360,116 @@ public class ParrotDashboardViewController: UIViewController {
         view.animateLayout()
     }
     
+    private func updateMapMicrosoft() {
+        if let mapViewController = mapViewController {
+            mapViewController.view.removeFromSuperview()
+            mapViewController.removeFromParent()
+        }
+        
+        let mapViewController = MicrosoftMapViewController.create(droneSessionManager: droneSessionManager, credentialsKey: mapCredentialsKey)
+        self.mapViewController = mapViewController
+        addChild(mapViewController)
+        view.addSubview(mapViewController.view)
+        mapViewController.didMove(toParent: self)
+        view.setNeedsUpdateConstraints()
+    }
+    
+    private func updateMapMapbox() {
+        if let mapViewController = mapViewController {
+            mapViewController.view.removeFromSuperview()
+            mapViewController.removeFromParent()
+        }
+        
+        let mapViewController = MapboxMapViewController.create(droneSessionManager: droneSessionManager)
+        self.mapViewController = mapViewController
+        addChild(mapViewController)
+        view.addSubview(mapViewController.view)
+        mapViewController.didMove(toParent: self)
+        view.setNeedsUpdateConstraints()
+    }
+    
+    @objc func onMapMore(sender: Any) {
+        if let mapViewController = mapViewController as? MicrosoftMapViewController {
+            mapViewController.onMore(sender: sender, actions: [
+                UIAlertAction(title: "ParrotDashboardViewController.map.mapbox".localized, style: .default, handler: { _ in
+                    self.updateMapMapbox()
+                })
+            ])
+        }
+        else if let mapViewController = mapViewController as? MapboxMapViewController {
+            mapViewController.onMore(sender: sender, actions: [
+                UIAlertAction(title: "ParrotDashboardViewController.map.microsoft".localized, style: .default, handler: { _ in
+                    self.updateMapMicrosoft()
+                })
+            ])
+        }
+    }
+    
     @objc func onDismiss(sender: Any) {
         dismiss(animated: true)
+    }
+    
+    @objc func onTakeoffLand(sender: Any) {
+        if let controlSession = controlSession {
+            controlSession.deactivate()
+            self.controlSession = nil
+            session?.drone.startLanding(finished: nil)
+            takeoffLandButton.setTitle("Takeoff", for: .normal)
+        }
+        else {
+            controlSession = session?.createControlSession()
+            Thread.detachNewThread(self.execute)
+            takeoffLandButton.setTitle("Land", for: .normal)
+        }
+    }
+    
+    @objc func onJoystickLeftTapGesture(recognizer: UITapGestureRecognizer) {
+        if recognizer.state == .ended {
+            joystickLeftActive = false
+        }
+    }
+    
+    @objc func onJoystickLeftPanGesture(recognizer: UIPanGestureRecognizer) {
+        let translation = recognizer.translation(in: joystickLeftView)
+        if let view = recognizer.view {
+            vertical = Double(max(-1, min(1, (-translation.y / view.frame.height) * 2)))
+            yaw = Double(max(-1, min(1, (translation.x / view.frame.width) * 2)))
+            joystickLeftActive = true
+        }
+    }
+    
+    @objc func onJoystickRightTapGesture(recognizer: UITapGestureRecognizer) {
+        if recognizer.state == .ended {
+            joystickRightActive = false
+        }
+    }
+    
+    @objc func onJoystickRightPanGesture(recognizer: UIPanGestureRecognizer) {
+        let translation = recognizer.translation(in: joystickLeftView)
+        if let view = recognizer.view {
+            roll = Double(max(-1, min(1, (translation.x / view.frame.width) * 2)))
+            pitch = Double(max(-1, min(1, (translation.y / view.frame.height) * 2)))
+            joystickRightActive = true
+        }
+    }
+    
+    func execute() {
+        let updateInterval = 0.1
+        while controlSession != nil {
+            if let disengageReason = controlSession?.disengageReason {
+                NSLog("disengageReason=\(disengageReason.display)")
+                break
+            }
+            
+            if controlSession?.activate() ?? false, let flightController = (self.session?.drone as? ParrotDroneAdapter)?.flightController {
+                flightController.set(yawRotationSpeed: self.joystickLeftActive ? Int(yaw * 100) : 0)
+                flightController.set(verticalSpeed: self.joystickLeftActive ? Int(vertical * 100) : 0)
+                flightController.set(pitch: self.joystickRightActive ? Int(pitch * 100) : 0)
+                flightController.set(roll: self.joystickRightActive ? Int(roll * 100) : 0)
+            }
+            
+            Thread.sleep(forTimeInterval: updateInterval)
+        }
     }
 }
 
@@ -282,6 +502,10 @@ extension ParrotDashboardViewController: DronelinkDelegate {
             self.view.setNeedsUpdateConstraints()
         }
     }
+    
+    public func onFuncLoaded(executor: FuncExecutor) {}
+    
+    public func onFuncUnloaded(executor: FuncExecutor) {}
 }
 
 extension ParrotDashboardViewController: DroneSessionManagerDelegate {
@@ -315,7 +539,11 @@ extension ParrotDashboardViewController: DroneSessionManagerDelegate {
 }
 
 extension ParrotDashboardViewController: MissionExecutorDelegate {
-    public func onMissionEstimated(executor: MissionExecutor, duration: TimeInterval) {}
+    public func onMissionEstimating(executor: MissionExecutor) {}
+    
+    public func onMissionEstimated(executor: MissionExecutor, estimate: MissionExecutor.Estimate) {}
+    
+    public func onMissionEngaging(executor: MissionExecutor) {}
     
     public func onMissionEngaged(executor: MissionExecutor, engagement: MissionExecutor.Engagement) {
         DispatchQueue.main.async {
@@ -333,8 +561,7 @@ extension ParrotDashboardViewController: MissionExecutorDelegate {
 }
 
 extension ParrotDashboardViewController: MissionViewControllerDelegate {
-    public func onExpandToggle() {
-        missionExpanded = !missionExpanded
+    public func onMissionExpandToggle() {
         updateConstraintsMission()
         view.animateLayout()
     }

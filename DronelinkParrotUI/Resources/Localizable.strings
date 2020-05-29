@@ -5,3 +5,5 @@
 //  Created by Jim McAndrew on 11/21/19.
 //  Copyright © 2019 Dronelink. All rights reserved.
 //
+"ParrotDashboardViewController.map.mapbox" = "2D (Satellite)";
+"ParrotDashboardViewController.map.microsoft" = "3D (Beta)";
