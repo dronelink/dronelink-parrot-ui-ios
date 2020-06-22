@@ -13,6 +13,7 @@ import DronelinkCoreUI
 import DronelinkParrot
 import GroundSdk
 import MaterialComponents.MaterialPalettes
+import MaterialComponents.MaterialProgressView
 
 open class ParrotDashboardViewController: UIViewController {
     public static func create(droneSessionManager: DroneSessionManager, mapCredentialsKey: String) -> ParrotDashboardViewController {
@@ -26,19 +27,26 @@ open class ParrotDashboardViewController: UIViewController {
     private var droneSessionManager: DroneSessionManager!
     public var session: DroneSession?
     private var missionExecutor: MissionExecutor?
+    private var funcExecutor: FuncExecutor?
     private var mapViewController: UIViewController!
     private var mapCredentialsKey = ""
     private let primaryViewToggleButton = UIButton(type: .custom)
     private let mapMoreButton = UIButton(type: .custom)
     private let dismissButton = UIButton(type: .custom)
     private let statusLabel = UILabel()
-    private let batteryLabel = UILabel()
+    private let statusGradient = CAGradientLayer()
     private var videoPreviewerView = StreamView(frame: CGRect.zero)
+    private let reticalImageView = UIImageView()
     private let topBarBackgroundView = UIView()
+    private let batteryProgressView = MDCProgressView()
     
+    private var instrumentsViewController: InstrumentsViewController?
     private var telemetryViewController: TelemetryViewController?
     private var missionViewController: MissionViewController?
     private var missionExpanded: Bool { missionViewController?.expanded ?? false }
+    private var funcViewController: FuncViewController?
+    private var funcExpanded = false
+    private var primaryViewToggled = false
     private var videoPreviewerPrimary = true
     private let defaultPadding = 10
     private var primaryView: UIView { return videoPreviewerPrimary || portrait ? videoPreviewerView : mapViewController.view }
@@ -47,7 +55,7 @@ open class ParrotDashboardViewController: UIViewController {
     private var tablet: Bool { return UIDevice.current.userInterfaceIdiom == .pad }
     private var statusWidgetHeight: CGFloat { return tablet ? 50 : 40 }
     
-    private let updateInterval: TimeInterval = 0.5
+    private let updateInterval: TimeInterval = 1.0
     private var updateTimer: Timer?
     
     private var streamServerRef: Ref<StreamServer>?
@@ -66,6 +74,10 @@ open class ParrotDashboardViewController: UIViewController {
     private var pitch = 0.0
     private var roll = 0.0
     
+    private let batteryProgressLowColor = MDCPalette.red.accent400
+    private let batteryProgressMediumColor = MDCPalette.amber.accent400
+    private let batteryProgressHightColor = MDCPalette.green.accent400
+    
     public override var preferredStatusBarStyle: UIStatusBarStyle {
         return .lightContent
     }
@@ -73,14 +85,32 @@ open class ParrotDashboardViewController: UIViewController {
     public override func viewDidLoad() {
         super.viewDidLoad()
         
+        if #available(iOS 13.0, *) {
+            overrideUserInterfaceStyle = .dark
+        }
+        
+        videoPreviewerPrimary = droneSessionManager.session != nil
+        
         view.backgroundColor = UIColor.black
         
         videoPreviewerView.addShadow()
         videoPreviewerView.backgroundColor = UIColor(displayP3Red: 35/255, green: 35/255, blue: 35/255, alpha: 1)
         view.addSubview(videoPreviewerView)
         
+        reticalImageView.isUserInteractionEnabled = false
+        reticalImageView.contentMode = .scaleAspectFit
+        view.addSubview(reticalImageView)
+        
         topBarBackgroundView.backgroundColor = DronelinkUI.Constants.overlayColor
         view.addSubview(topBarBackgroundView)
+        
+        statusGradient.colors = [DronelinkUI.Constants.overlayColor.cgColor]
+        statusGradient.startPoint = CGPoint(x: 0, y: 0)
+        statusGradient.endPoint = CGPoint(x: 1, y: 0)
+        topBarBackgroundView.layer.insertSublayer(statusGradient, at: 0)
+        
+        batteryProgressView.trackTintColor = UIColor.white.withAlphaComponent(0.15)
+        view.addSubview(batteryProgressView)
         
         dismissButton.tintColor = UIColor.white
         dismissButton.setImage(DronelinkParrotUI.loadImage(named: "dronelink-logo"), for: .normal)
@@ -89,14 +119,11 @@ open class ParrotDashboardViewController: UIViewController {
         dismissButton.addTarget(self, action: #selector(onDismiss(sender:)), for: .touchUpInside)
         view.addSubview(dismissButton)
         
-        batteryLabel.textColor = UIColor.white
-        batteryLabel.font = UIFont.systemFont(ofSize: 16, weight: .bold)
-        view.addSubview(batteryLabel)
-        batteryLabel.snp.makeConstraints { make in
-            make.width.equalTo(50)
-            make.top.equalTo(dismissButton)
-            make.bottom.equalTo(dismissButton)
-            make.right.equalToSuperview().offset(-5)
+        if Device.legacy {
+            updateMapMapbox()
+        }
+        else {
+            updateMapMicrosoft()
         }
         
         statusLabel.textColor = UIColor.white
@@ -106,14 +133,14 @@ open class ParrotDashboardViewController: UIViewController {
             make.top.equalTo(dismissButton)
             make.bottom.equalTo(dismissButton)
             make.left.equalTo(dismissButton.snp.right).offset(5)
-            make.right.equalTo(batteryLabel.snp.left).offset(-5)
+            make.right.equalToSuperview().offset(-5)
         }
         
-        let mapViewController = MapboxMapViewController.create(droneSessionManager: self.droneSessionManager)
-        self.mapViewController = mapViewController
-        addChild(mapViewController)
-        view.addSubview(mapViewController.view)
-        mapViewController.didMove(toParent: self)
+        let instrumentsViewController = InstrumentsViewController.create(droneSessionManager: self.droneSessionManager)
+        addChild(instrumentsViewController)
+        view.addSubview(instrumentsViewController.view)
+        instrumentsViewController.didMove(toParent: self)
+        self.instrumentsViewController = instrumentsViewController
         
         primaryViewToggleButton.tintColor = UIColor.white
         primaryViewToggleButton.setImage(DronelinkParrotUI.loadImage(named: "vector-arrange-below"), for: .normal)
@@ -169,8 +196,6 @@ open class ParrotDashboardViewController: UIViewController {
                 make.centerX.equalToSuperview()
             }
         }
-        
-        updateMapMicrosoft()
     }
     
     public override func viewWillAppear(_ animated: Bool) {
@@ -184,6 +209,8 @@ open class ParrotDashboardViewController: UIViewController {
         super.viewDidDisappear(animated)
         Dronelink.shared.remove(delegate: self)
         droneSessionManager?.remove(delegate: self)
+        session?.remove(delegate: self)
+        missionExecutor?.remove(delegate: self)
         updateTimer?.invalidate()
         updateTimer = nil
     }
@@ -199,10 +226,23 @@ open class ParrotDashboardViewController: UIViewController {
     }
     
     @objc func update() {
-        statusLabel.text = session == nil ? "Disconnected" : session?.state?.value.location == nil ? "Telemetry Unavailable" : Dronelink.shared.missionExecutor?.engaged ?? false ? "Mission Engaged" : "Ready"
-        let statusColor = session?.state?.value.location == nil ? MDCPalette.red.accent400 : Dronelink.shared.missionExecutor?.engaged ?? false ? MDCPalette.blue.accent400 : MDCPalette.green.accent400
-        topBarBackgroundView.backgroundColor = session == nil ? DronelinkUI.Constants.overlayColor : statusColor?.withAlphaComponent(0.75)
-        batteryLabel.text = Dronelink.shared.format(formatter: "percent", value: session?.state?.value.batteryPercent)
+        if let status = (session as? ParrotDroneSession)?.status {
+            statusLabel.text = status.display
+            statusGradient.colors = [status.level.color!.withAlphaComponent(0.5).cgColor, DronelinkUI.Constants.overlayColor.cgColor]
+        }
+        else {
+            statusLabel.text = "ParrotDashboardViewController.disconnected".localized
+            statusGradient.colors = [DronelinkUI.Constants.overlayColor.cgColor]
+        }
+        statusGradient.frame = topBarBackgroundView.bounds
+        let batteryPercent = Float(session?.state?.value.batteryPercent ?? 0)
+        batteryProgressView.setProgress(batteryPercent, animated: true)
+        if batteryPercent < 0.5 {
+            batteryProgressView.progressTintColor = batteryProgressLowColor?.interpolate(batteryProgressMediumColor, percent: CGFloat(batteryPercent / 0.5))
+        }
+        else {
+            batteryProgressView.progressTintColor = batteryProgressMediumColor?.interpolate(batteryProgressHightColor, percent: CGFloat((batteryPercent - 0.5) / 0.5))
+        }
     }
     
     override public func updateViewConstraints() {
@@ -211,10 +251,14 @@ open class ParrotDashboardViewController: UIViewController {
     }
     
     open func updateConstraints() {
+        view.sendSubviewToBack(reticalImageView)
         view.sendSubviewToBack(primaryView)
         view.bringSubviewToFront(secondaryView)
         view.bringSubviewToFront(primaryViewToggleButton)
         view.bringSubviewToFront(mapMoreButton)
+        if let instrumentsView = instrumentsViewController?.view {
+            view.bringSubviewToFront(instrumentsView)
+        }
         if let telemetryView = telemetryViewController?.view {
             view.bringSubviewToFront(telemetryView)
         }
@@ -253,11 +297,27 @@ open class ParrotDashboardViewController: UIViewController {
                 make.bottom.equalToSuperview()
             }
             else {
-                make.width.equalTo(view.snp.width).multipliedBy(tablet ? 0.4 : 0.28)
+                if tablet {
+                    make.width.equalTo(view.snp.width).multipliedBy(funcViewController == nil || !funcExpanded ? 0.4 : 0.30)
+                }
+                else {
+                    make.width.equalTo(view.snp.width).multipliedBy(funcViewController == nil || !funcExpanded ? 0.28 : 0.18)
+                }
+                
                 make.height.equalTo(secondaryView.snp.width).multipliedBy(0.5)
                 make.bottom.equalTo(view.safeAreaLayoutGuide.snp.bottom).offset(-defaultPadding)
-                make.left.equalTo(view.safeAreaLayoutGuide.snp.left).offset(defaultPadding)
+                if !portrait, funcExpanded, let funcViewController = funcViewController {
+                    make.left.equalTo(funcViewController.view.snp.right).offset(defaultPadding)
+                }
+                else {
+                    make.left.equalTo(view.safeAreaLayoutGuide.snp.left).offset(defaultPadding)
+                }
             }
+        }
+        
+        reticalImageView.snp.remakeConstraints { make in
+            make.center.equalTo(videoPreviewerView)
+            make.height.equalTo(videoPreviewerView)
         }
         
         primaryViewToggleButton.isHidden = portrait
@@ -282,12 +342,31 @@ open class ParrotDashboardViewController: UIViewController {
             make.height.equalTo(statusWidgetHeight)
         }
         
+        batteryProgressView.snp.remakeConstraints { make in
+            make.left.equalTo(topBarBackgroundView.snp.left)
+            make.right.equalTo(topBarBackgroundView.snp.right)
+            make.height.equalTo(4)
+            make.top.equalTo(topBarBackgroundView.snp.bottom)
+        }
+        
         dismissButton.isEnabled = !(missionExecutor?.engaged ?? false)
         dismissButton.snp.remakeConstraints { make in
             make.left.equalToSuperview().offset(10)
             make.top.equalTo(topBarBackgroundView.snp.top)
             make.width.equalTo(statusWidgetHeight * 1.25)
             make.height.equalTo(statusWidgetHeight)
+        }
+        
+        instrumentsViewController?.view.snp.remakeConstraints { make in
+            if portrait && !tablet {
+                make.top.equalTo(topBarBackgroundView.snp.bottom).offset(8)
+            }
+            else {
+                make.top.equalTo(topBarBackgroundView.snp.top).offset(5)
+            }
+            make.height.equalTo(30)
+            make.right.equalTo(view.safeAreaLayoutGuide.snp.right)
+            make.width.equalTo(260)
         }
         
         telemetryViewController?.view.snp.remakeConstraints { make in
@@ -304,6 +383,7 @@ open class ParrotDashboardViewController: UIViewController {
         }
         
         updateConstraintsMission()
+        updateConstraintsFunc()
     }
     
     func updateConstraintsMission() {
@@ -344,8 +424,14 @@ open class ParrotDashboardViewController: UIViewController {
                 else {
                     make.width.equalToSuperview().multipliedBy(0.4)
                 }
+                
                 if (missionExpanded) {
-                    make.bottom.equalTo(secondaryView.snp.top).offset(-Double(defaultPadding) * 1.5)
+                    if (tablet) {
+                        make.height.equalTo(180)
+                    }
+                    else {
+                        make.bottom.equalTo(secondaryView.snp.top).offset(-Double(defaultPadding) * 1.5)
+                    }
                 }
                 else {
                     make.height.equalTo(80)
@@ -354,7 +440,46 @@ open class ParrotDashboardViewController: UIViewController {
         }
     }
     
+    func updateConstraintsFunc() {
+        if let funcViewController = funcViewController {
+            view.bringSubviewToFront(funcViewController.view)
+            funcViewController.view.snp.remakeConstraints { make in
+                let large = tablet || portrait
+                if (funcExpanded) {
+                    if (portrait) {
+                        make.height.equalTo(tablet ? 550 : 300)
+                    }
+                    else {
+                        make.bottom.equalTo(view.safeAreaLayoutGuide.snp.bottom).offset(-defaultPadding)
+                    }
+                }
+                else {
+                    make.height.equalTo(165)
+                }
+                
+                if (portrait && tablet) {
+                    make.bottom.equalTo(view.safeAreaLayoutGuide.snp.bottom).offset(-defaultPadding)
+                    make.left.equalTo(view.safeAreaLayoutGuide.snp.left).offset(defaultPadding)
+                    make.width.equalTo(large ? 350 : 310)
+                    return
+                }
+                
+                if (portrait) {
+                    make.right.equalToSuperview()
+                    make.left.equalToSuperview()
+                    make.top.equalTo(secondaryView.snp.top)
+                    return
+                }
+                
+                make.top.equalTo(topBarBackgroundView.snp.bottom).offset(defaultPadding)
+                make.left.equalTo(view.safeAreaLayoutGuide.snp.left).offset(defaultPadding)
+                make.width.equalTo(large ? 350 : 310)
+            }
+        }
+    }
+    
     @objc func onPrimaryViewToggle(sender: Any) {
+        primaryViewToggled = true
         videoPreviewerPrimary = !videoPreviewerPrimary
         updateConstraints()
         view.animateLayout()
@@ -408,6 +533,21 @@ open class ParrotDashboardViewController: UIViewController {
     @objc func onDismiss(sender: Any) {
         dismiss(animated: true)
     }
+    
+    private func apply(userInterfaceSettings: Mission.UserInterfaceSettings?) {
+        reticalImageView.image = nil
+        if let reticalImageUrl = userInterfaceSettings?.reticalImageUrl {
+            reticalImageView.kf.setImage(with: URL(string: reticalImageUrl))
+        }
+        
+        view.setNeedsUpdateConstraints()
+    }
+    
+    //work-around for this: https://github.com/flutter/flutter/issues/35784
+    override public func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {}
+    override public func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {}
+    override public func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {}
+    override public func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {}
     
     @objc func onTakeoffLand(sender: Any) {
         if let controlSession = controlSession {
@@ -486,7 +626,7 @@ extension ParrotDashboardViewController: DronelinkDelegate {
             missionViewController.didMove(toParent: self)
             self.missionViewController = missionViewController
             executor.add(delegate: self)
-            self.view.setNeedsUpdateConstraints()
+            self.apply(userInterfaceSettings: executor.userInterfaceSettings)
         }
     }
     
@@ -499,20 +639,53 @@ extension ParrotDashboardViewController: DronelinkDelegate {
                 self.missionViewController = nil
             }
             executor.remove(delegate: self)
-            self.view.setNeedsUpdateConstraints()
+            self.apply(userInterfaceSettings: nil)
         }
     }
     
-    public func onFuncLoaded(executor: FuncExecutor) {}
+    public func onFuncLoaded(executor: FuncExecutor) {
+        DispatchQueue.main.async {
+            self.funcExecutor = executor
+            self.funcExpanded = false
+            let funcViewController = FuncViewController.create(droneSessionManager: self.droneSessionManager, delegate: self)
+            self.addChild(funcViewController)
+            self.view.addSubview(funcViewController.view)
+            funcViewController.didMove(toParent: self)
+            self.funcViewController = funcViewController
+            self.apply(userInterfaceSettings: executor.userInterfaceSettings)
+        }
+    }
     
-    public func onFuncUnloaded(executor: FuncExecutor) {}
+    public func onFuncUnloaded(executor: FuncExecutor) {
+        DispatchQueue.main.async {
+            self.funcExecutor = nil
+            if let funcViewController = self.funcViewController {
+                funcViewController.view.removeFromSuperview()
+                funcViewController.removeFromParent()
+                self.funcViewController = nil
+            }
+            
+            if self.missionExecutor == nil {
+                self.apply(userInterfaceSettings: nil)
+            }
+            else {
+                self.view.setNeedsUpdateConstraints()
+            }
+        }
+    }
 }
 
 extension ParrotDashboardViewController: DroneSessionManagerDelegate {
     public func onOpened(session: DroneSession) {
         DispatchQueue.main.async {
             self.session = session
-            self.view.setNeedsUpdateConstraints()
+            session.add(delegate: self)
+            DispatchQueue.main.async {
+                if !self.primaryViewToggled {
+                    self.videoPreviewerPrimary = true
+                }
+                self.view.setNeedsUpdateConstraints()
+            }
             
             self.streamServerRef = (self.session?.drone as? ParrotDroneAdapter)?.drone.getPeripheral(Peripherals.streamServer) { [weak self] streamServer in
                 if let self = self, let streamServer = streamServer {
@@ -529,13 +702,32 @@ extension ParrotDashboardViewController: DroneSessionManagerDelegate {
     }
     
     public func onClosed(session: DroneSession) {
+        self.session = nil
+        session.remove(delegate: self)
         DispatchQueue.main.async {
-            self.session = nil
             self.liveStreamRef = nil
             self.videoPreviewerView.setStream(stream: nil)
             self.view.setNeedsUpdateConstraints()
         }
     }
+}
+
+extension ParrotDashboardViewController: DroneSessionDelegate {
+    public func onInitialized(session: DroneSession) {
+        if let cameraState = session.cameraState(channel: 0), !cameraState.value.isSDCardInserted {
+            DronelinkUI.shared.showDialog(title: "ParrotDashboardViewController.camera.noSDCard.title".localized, details: "ParrotDashboardViewController.camera.noSDCard.details".localized)
+        }
+    }
+    
+    public func onLocated(session: DroneSession) {}
+    
+    public func onMotorsChanged(session: DroneSession, value: Bool) {}
+    
+    public func onCommandExecuted(session: DroneSession, command: MissionCommand) {}
+    
+    public func onCommandFinished(session: DroneSession, command: MissionCommand, error: Error?) {}
+    
+    public func onCameraFileGenerated(session: DroneSession, file: CameraFile) {}
 }
 
 extension ParrotDashboardViewController: MissionExecutorDelegate {
@@ -564,5 +756,26 @@ extension ParrotDashboardViewController: MissionViewControllerDelegate {
     public func onMissionExpandToggle() {
         updateConstraintsMission()
         view.animateLayout()
+    }
+}
+
+extension ParrotDashboardViewController: FuncViewControllerDelegate {
+    public func onFuncExpanded(value: Bool) {
+        funcExpanded = value
+        updateConstraints()
+        view.animateLayout()
+    }
+}
+
+extension Mission.MessageLevel {
+    var color: UIColor? {
+        switch self {
+        case .info:
+            return MDCPalette.green.accent400
+        case .warning:
+            return MDCPalette.amber.accent400
+        case .danger, .error:
+            return MDCPalette.red.accent400
+        }
     }
 }

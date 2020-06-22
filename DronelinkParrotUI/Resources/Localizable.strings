@@ -5,5 +5,8 @@
 //  Created by Jim McAndrew on 11/21/19.
 //  Copyright © 2019 Dronelink. All rights reserved.
 //
+"ParrotDashboardViewController.camera.noSDCard.title" = "SD Card Missing";
+"ParrotDashboardViewController.camera.noSDCard.details" = "Please make sure to insert an SD card before running a mission with data capture.";
 "ParrotDashboardViewController.map.mapbox" = "2D (Satellite)";
 "ParrotDashboardViewController.map.microsoft" = "3D (Beta)";
+"ParrotDashboardViewController.disconnected" = "Disconnected";
