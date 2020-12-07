@@ -12,6 +12,7 @@
 		242AC07F238708E800438D26 /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 242AC07E238708E800438D26 /* Extensions.swift */; };
 		242AC0832387092200438D26 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 242AC0812387092200438D26 /* Localizable.strings */; };
 		242AC0842387092200438D26 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 242AC0822387092200438D26 /* Images.xcassets */; };
+		243308AB257AB40500FCC2B7 /* ParrotCameraFeedWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 243308AA257AB40500FCC2B7 /* ParrotCameraFeedWidget.swift */; };
 		2B30701F54987A1E5EDBDAF2 /* Pods_DronelinkParrotUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3D02E61E91F8BAB771E08DA6 /* Pods_DronelinkParrotUI.framework */; };
 /* End PBXBuildFile section */
 
@@ -23,6 +24,7 @@
 		242AC07E238708E800438D26 /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
 		242AC0812387092200438D26 /* Localizable.strings */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.strings; path = Localizable.strings; sourceTree = "<group>"; };
 		242AC0822387092200438D26 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
+		243308AA257AB40500FCC2B7 /* ParrotCameraFeedWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParrotCameraFeedWidget.swift; sourceTree = "<group>"; };
 		3D02E61E91F8BAB771E08DA6 /* Pods_DronelinkParrotUI.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_DronelinkParrotUI.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		44ED12765CD5D546CE87F5B7 /* Pods-DronelinkParrotUI.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-DronelinkParrotUI.release.xcconfig"; path = "Target Support Files/Pods-DronelinkParrotUI/Pods-DronelinkParrotUI.release.xcconfig"; sourceTree = "<group>"; };
 		B830D99EC2C9DC016F120016 /* Pods-DronelinkParrotUI.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-DronelinkParrotUI.debug.xcconfig"; path = "Target Support Files/Pods-DronelinkParrotUI/Pods-DronelinkParrotUI.debug.xcconfig"; sourceTree = "<group>"; };
@@ -64,6 +66,7 @@
 				242AC07C238708DB00438D26 /* DronelinkParrotUI.swift */,
 				242AC07E238708E800438D26 /* Extensions.swift */,
 				242AC07A238708C900438D26 /* ParrotDashboardViewController.swift */,
+				243308AA257AB40500FCC2B7 /* ParrotCameraFeedWidget.swift */,
 				242AC0802387092200438D26 /* Resources */,
 				242AC0732387073D00438D26 /* Info.plist */,
 			);
@@ -134,7 +137,7 @@
 		242AC0662387073D00438D26 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 1120;
+				LastUpgradeCheck = 1210;
 				ORGANIZATIONNAME = Dronelink;
 				TargetAttributes = {
 					242AC06E2387073D00438D26 = {
@@ -203,6 +206,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				243308AB257AB40500FCC2B7 /* ParrotCameraFeedWidget.swift in Sources */,
 				242AC07D238708DB00438D26 /* DronelinkParrotUI.swift in Sources */,
 				242AC07F238708E800438D26 /* Extensions.swift in Sources */,
 				242AC07B238708C900438D26 /* ParrotDashboardViewController.swift in Sources */,
@@ -238,6 +242,7 @@
 				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
 				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
 				CLANG_WARN_STRICT_PROTOTYPES = YES;
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
@@ -301,6 +306,7 @@
 				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
 				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
 				CLANG_WARN_STRICT_PROTOTYPES = YES;
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
