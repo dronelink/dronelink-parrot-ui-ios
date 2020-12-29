@@ -35,5 +35,6 @@ open class ParrotWidgetFactory: WidgetFactory {
         return current is ParrotCameraFeedWidget ? current : ParrotCameraFeedWidget()
     }
     
-    open override func createDownlinkWidget(current: Widget? = nil) -> Widget? { nil }
+    open override var cameraMenuWidgetEnabled: Bool { false }
+    open override var cameraExposureMenuWidgetEnabled: Bool { false }
 }
