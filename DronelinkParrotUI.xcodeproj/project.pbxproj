@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		242AC07B238708C900438D26 /* ParrotDashboardViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 242AC07A238708C900438D26 /* ParrotDashboardViewController.swift */; };
 		242AC07D238708DB00438D26 /* DronelinkParrotUI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 242AC07C238708DB00438D26 /* DronelinkParrotUI.swift */; };
 		242AC07F238708E800438D26 /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 242AC07E238708E800438D26 /* Extensions.swift */; };
 		242AC0832387092200438D26 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 242AC0812387092200438D26 /* Localizable.strings */; };
@@ -19,7 +18,6 @@
 /* Begin PBXFileReference section */
 		242AC06F2387073D00438D26 /* DronelinkParrotUI.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = DronelinkParrotUI.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		242AC0732387073D00438D26 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		242AC07A238708C900438D26 /* ParrotDashboardViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParrotDashboardViewController.swift; sourceTree = "<group>"; };
 		242AC07C238708DB00438D26 /* DronelinkParrotUI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DronelinkParrotUI.swift; sourceTree = "<group>"; };
 		242AC07E238708E800438D26 /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
 		242AC0812387092200438D26 /* Localizable.strings */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.strings; path = Localizable.strings; sourceTree = "<group>"; };
@@ -65,7 +63,6 @@
 			children = (
 				242AC07C238708DB00438D26 /* DronelinkParrotUI.swift */,
 				242AC07E238708E800438D26 /* Extensions.swift */,
-				242AC07A238708C900438D26 /* ParrotDashboardViewController.swift */,
 				243308AA257AB40500FCC2B7 /* ParrotCameraFeedWidget.swift */,
 				242AC0802387092200438D26 /* Resources */,
 				242AC0732387073D00438D26 /* Info.plist */,
@@ -209,7 +206,6 @@
 				243308AB257AB40500FCC2B7 /* ParrotCameraFeedWidget.swift in Sources */,
 				242AC07D238708DB00438D26 /* DronelinkParrotUI.swift in Sources */,
 				242AC07F238708E800438D26 /* Extensions.swift in Sources */,
-				242AC07B238708C900438D26 /* ParrotDashboardViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
