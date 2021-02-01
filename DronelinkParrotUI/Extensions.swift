@@ -15,7 +15,7 @@ extension String {
     
     var localized: String {
         let value = DronelinkParrotUI.bundle.localizedString(forKey: self, value: String.LocalizationMissing, table: nil)
-        assert(value != String.LocalizationMissing, "String localization missing: \(self)")
+        //assert(value != String.LocalizationMissing, "String localization missing: \(self)")
         return value
     }
 }
