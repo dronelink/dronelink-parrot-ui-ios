@@ -18,7 +18,7 @@ public class ParrotCameraFeedWidget: DelegateWidget {
     public override func viewDidLoad() {
         super.viewDidLoad()
         view.addSubview(streamView)
-        streamView.snp.makeConstraints { make in
+        streamView.snp.makeConstraints { [weak self] make in
             make.edges.equalToSuperview()
         }
     }
@@ -42,9 +42,9 @@ public class ParrotCameraFeedWidget: DelegateWidget {
     public override func onClosed(session: DroneSession) {
         super.onClosed(session: session)
 
-        DispatchQueue.main.async {
-            self.liveStreamRef = nil
-            self.streamView.setStream(stream: nil)
+        DispatchQueue.main.async { [weak self] in
+            self?.liveStreamRef = nil
+            self?.streamView.setStream(stream: nil)
         }
     }
 }
