@@ -3,7 +3,7 @@ PODS:
     - SwiftyGif
   - ArsdkEngine (1.7.1):
     - GroundSdk (= 1.7.1)
-  - DronelinkCore (2.2.0-beta1)
+  - DronelinkCore (2.2.0)
   - DronelinkCoreUI (2.1.0):
     - Agrume (~> 5.6.10)
     - DronelinkCore (~> 2.2.0-beta1)
@@ -191,8 +191,7 @@ PODS:
   - SwiftyUserDefaults (5.0.0)
 
 DEPENDENCIES:
-  - DronelinkCore (= 2.2.0-beta1)
-  - DronelinkCoreUI (from `https://github.com/dronelink/dronelink-core-ui-ios.git`, branch `core-beta`)
+  - DronelinkCoreUI (from `https://github.com/dronelink/dronelink-core-ui-ios.git`, branch `cds-beta-version`)
   - DronelinkParrot (from `https://github.com/dronelink/dronelink-parrot-ios.git`, branch `feat/channel-camera-index`)
   - MaterialComponents/Palettes (~> 119.0.0)
   - SnapKit (~> 5.0.1)
@@ -222,7 +221,7 @@ SPEC REPOS:
 
 EXTERNAL SOURCES:
   DronelinkCoreUI:
-    :branch: core-beta
+    :branch: cds-beta-version
     :git: https://github.com/dronelink/dronelink-core-ui-ios.git
   DronelinkParrot:
     :branch: feat/channel-camera-index
@@ -230,7 +229,7 @@ EXTERNAL SOURCES:
 
 CHECKOUT OPTIONS:
   DronelinkCoreUI:
-    :commit: f5c21f457cbc0e3156839ff435136038b6e68d23
+    :commit: a6cf74c8ca2e7b8b2cec7faa4b8a522bdf6431f9
     :git: https://github.com/dronelink/dronelink-core-ui-ios.git
   DronelinkParrot:
     :commit: 808980b830db0a242a528805cc70bc1ff2915ca5
@@ -239,7 +238,7 @@ CHECKOUT OPTIONS:
 SPEC CHECKSUMS:
   Agrume: 21b96a1138abc0f890211bfcb12f8b1e3464b4c1
   ArsdkEngine: 141abda6632f25935253d3f4d2ff5eccd92fffca
-  DronelinkCore: 328580ce1a98ae1cca486563c34b7b09f0f71c49
+  DronelinkCore: d592fa18c13a5b336a706d4caf8530b6fb5512fb
   DronelinkCoreUI: 45aa6e984b5ea745ff8c7937b1d21411e7ed3008
   DronelinkParrot: 4da849b65964bf358787574be4e9dd025d2f9672
   GroundSdk: 3b5a38e2039aaef3cd5aee22a543dfbf37376ca6
@@ -259,6 +258,6 @@ SPEC CHECKSUMS:
   SwiftyGif: 5d4af95df24caf1c570dbbcb32a3b8a0763bc6d7
   SwiftyUserDefaults: 33fcb42bd1feb53a37d873feb62c82967db5f7f6
 
-PODFILE CHECKSUM: 1c5a236666f07a541c3bb5575a9fad285431f279
+PODFILE CHECKSUM: dfe08ced5697e159f848f9b9f7def11f0e045fda
 
 COCOAPODS: 1.10.1
