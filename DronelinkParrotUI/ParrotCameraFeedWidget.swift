@@ -125,7 +125,7 @@ public class ParrotCameraFeedWidget: UpdatableWidget {
         
         streamServerRef = (self.session!.drone as? ParrotDroneAdapter)?.drone.getPeripheral(Peripherals.streamServer) { [weak self] streamServer in
             if let streamServer = streamServer {
-                streamServer.enabled = self?.cameraRef?.isActive == true
+                streamServer.enabled = self?.camera?.isActive == true
                 self?.monitorLiveStream(streamServer: streamServer)
             }
         }
@@ -192,7 +192,7 @@ public class ParrotCameraFeedWidget: UpdatableWidget {
         // Prevent monitoring restart
         if (self.session == nil) { return }
         
-        self.cameraRef = (session?.cameraState(channel: self.channel)?.value as? ParrotCameraAdapter)?.camera
+        self.camera = (session?.cameraState(channel: self.channel)?.value as? ParrotCameraAdapter)?.camera
         if let camera = self.camera {
             if let liveStream = self.liveStreamRef?.value {
                 if (camera.isActive == true && liveStream.playState != CameraLivePlayState.playing) {

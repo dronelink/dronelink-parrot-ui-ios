@@ -12,7 +12,7 @@ Pod::Spec.new do |s|
   s.source_files  = "DronelinkParrotUI/**/*.swift"
   s.resources = "DronelinkParrotUI/**/*.{strings,xcassets}"
 
-  s.dependency "DronelinkCore", "~> 2.1.0"
+  s.dependency "DronelinkCore", "~> 2.2.0"
   s.dependency "DronelinkCoreUI", "~> 2.1.0"
   s.dependency "DronelinkParrot", "~> 1.0.0"
   s.dependency "SwiftyUserDefaults", "~> 5.0.0"

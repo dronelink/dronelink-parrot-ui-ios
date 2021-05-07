@@ -1,12 +1,12 @@
 PODS:
-  - Agrume (5.6.12):
+  - Agrume (5.6.13):
     - SwiftyGif
   - ArsdkEngine (1.7.1):
     - GroundSdk (= 1.7.1)
-  - DronelinkCore (2.1.0)
+  - DronelinkCore (2.2.0)
   - DronelinkCoreUI (2.1.0):
     - Agrume (~> 5.6.10)
-    - DronelinkCore (~> 2.1.0)
+    - DronelinkCore (~> 2.2.0)
     - IQKeyboardManager (~> 6.5.6)
     - Kingfisher (~> 5.15.7)
     - Mapbox-iOS-SDK (~> 6.3.0)
@@ -25,7 +25,7 @@ PODS:
     - SwiftyUserDefaults (~> 5.0.0)
   - DronelinkParrot (1.0.0):
     - ArsdkEngine (~> 1.7.1)
-    - DronelinkCore (~> 2.1.0)
+    - DronelinkCore (~> 2.2.0)
     - GroundSdk (~> 1.7.1)
     - SdkCore (~> 1.7.1)
   - GroundSdk (1.7.1):
@@ -36,7 +36,7 @@ PODS:
   - Kingfisher/Core (5.15.8)
   - Mapbox-iOS-SDK (6.3.0):
     - MapboxMobileEvents (~> 0.10.4)
-  - MapboxMobileEvents (0.10.7)
+  - MapboxMobileEvents (0.10.8)
   - MarqueeLabel (4.0.5)
   - MaterialComponents/ActivityIndicator (119.0.0):
     - MaterialComponents/Palettes
@@ -180,20 +180,20 @@ PODS:
     - MaterialComponents/private/Math
     - MDFTextAccessibility
   - MDFInternationalization (2.0.0)
-  - MDFTextAccessibility (2.0.0)
+  - MDFTextAccessibility (2.0.1)
   - MicrosoftMapsSDK (1.1.4)
   - MotionAnimator (2.8.1):
     - MotionInterchange (~> 1.6)
   - MotionInterchange (1.6.0)
   - SdkCore (1.7.1)
   - SnapKit (5.0.1)
-  - SwiftyGif (5.3.0)
+  - SwiftyGif (5.4.0)
   - SwiftyUserDefaults (5.0.0)
 
 DEPENDENCIES:
-  - DronelinkCore (from `../../private/dronelink-core-ios`)
-  - DronelinkCoreUI (from `../dronelink-core-ui-ios`)
-  - DronelinkParrot (from `../dronelink-parrot-ios`)
+  - DronelinkCore (= 2.2.0)
+  - DronelinkCoreUI (from `https://github.com/dronelink/dronelink-core-ui-ios.git`, branch `core-beta-cds`)
+  - DronelinkParrot (from `https://github.com/dronelink/dronelink-parrot-ios.git`, branch `core-beta-cds`)
   - MaterialComponents/Palettes (~> 119.0.0)
   - SnapKit (~> 5.0.1)
   - SwiftyUserDefaults (~> 5.0.0)
@@ -202,6 +202,7 @@ SPEC REPOS:
   trunk:
     - Agrume
     - ArsdkEngine
+    - DronelinkCore
     - GroundSdk
     - IQKeyboardManager
     - Kingfisher
@@ -220,36 +221,44 @@ SPEC REPOS:
     - SwiftyUserDefaults
 
 EXTERNAL SOURCES:
-  DronelinkCore:
-    :path: "../../private/dronelink-core-ios"
   DronelinkCoreUI:
-    :path: "../dronelink-core-ui-ios"
+    :branch: core-beta-cds
+    :git: https://github.com/dronelink/dronelink-core-ui-ios.git
   DronelinkParrot:
-    :path: "../dronelink-parrot-ios"
+    :branch: core-beta-cds
+    :git: https://github.com/dronelink/dronelink-parrot-ios.git
+
+CHECKOUT OPTIONS:
+  DronelinkCoreUI:
+    :commit: 82a5c0f4d0a3febbcd132664f517923da9d99bfb
+    :git: https://github.com/dronelink/dronelink-core-ui-ios.git
+  DronelinkParrot:
+    :commit: 0100081b7a6c0e8f08a7522515ac0dd31cfb15c2
+    :git: https://github.com/dronelink/dronelink-parrot-ios.git
 
 SPEC CHECKSUMS:
-  Agrume: d60f7ead4aad9720564148f7e9cbe0b225b1d814
+  Agrume: 21b96a1138abc0f890211bfcb12f8b1e3464b4c1
   ArsdkEngine: 141abda6632f25935253d3f4d2ff5eccd92fffca
-  DronelinkCore: e9c76d59c8ab0499d7fde2f4f526884f8ebc5742
-  DronelinkCoreUI: 0d752b430d0fbffe2ee6f4d2a2cd7fbba14cbd80
-  DronelinkParrot: f2bba61f1f78745037f2eb4390e759eb96b15bdb
+  DronelinkCore: d592fa18c13a5b336a706d4caf8530b6fb5512fb
+  DronelinkCoreUI: 95822599b7afbe889bfc65031a3fc5fcec5678aa
+  DronelinkParrot: 39b5eb1f675cb4e4abebc158adfbda1a238a5d45
   GroundSdk: 3b5a38e2039aaef3cd5aee22a543dfbf37376ca6
   IQKeyboardManager: 2a6e97afdafc7becf0cb17a9a8d795e3a980717f
   Kingfisher: a3c03d702433fa6cfedabb2bddbe076fb8f2e902
   Mapbox-iOS-SDK: 2563ed87ead6ec08f1c2090873977b8a7be335a8
-  MapboxMobileEvents: d0a581dedd8f47411cc65ea520b965e83914316e
+  MapboxMobileEvents: 36ff53b135aac486eed94b61f813c7967a0c2c6f
   MarqueeLabel: 00cc0bcd087111dca575878b3531af980559707d
   MaterialComponents: 69a725e28406a97816441dea4ec6ec38265a08bb
   MDFInternationalization: 010097556d6b09d2c4ea38e0820ea6d37be6a314
-  MDFTextAccessibility: 85c09a1bd9c321f494348e632a25063bcda35a53
+  MDFTextAccessibility: f4bb4cc2194286651b59a215fdeaa0e05dc90ba5
   MicrosoftMapsSDK: 64317bb343e3ef26507f61617889a6918a1b59d4
   MotionAnimator: ee16aa30567c5bae0fb2750c132915829cfaaf8a
   MotionInterchange: ead0e3ae1f3a5fb539e289debbc7ae036160a10d
   SdkCore: 524918831cb24f5443a65974797be6eda76613ec
   SnapKit: 97b92857e3df3a0c71833cce143274bf6ef8e5eb
-  SwiftyGif: e466e86c660d343357ab944a819a101c4127cb40
+  SwiftyGif: 5d4af95df24caf1c570dbbcb32a3b8a0763bc6d7
   SwiftyUserDefaults: 33fcb42bd1feb53a37d873feb62c82967db5f7f6
 
-PODFILE CHECKSUM: e1d20e29cff922e8189cdb9123a2502f181bd165
+PODFILE CHECKSUM: 0850ef1a75d58e9db06164b1a8b21e571e6b7150
 
-COCOAPODS: 1.10.0
+COCOAPODS: 1.10.1
