@@ -49,6 +49,7 @@ public class ParrotCameraFeedWidget: UpdatableWidget {
     
     public func setChannel(channel: UInt) {
         self.channel = channel
+        (session as? ParrotDroneSession)?.changeCamera(channel: self.channel)
         self.liveStreamRef?.value?.stop()
         changeMode()
         startDroneMonitors()
@@ -101,7 +102,7 @@ public class ParrotCameraFeedWidget: UpdatableWidget {
     
     public override func onOpened(session: DroneSession) {
         super.onOpened(session: session)
-        startDroneMonitors()
+        setChannel(channel: channel)
     }
     
     public override func onClosed(session: DroneSession) {
