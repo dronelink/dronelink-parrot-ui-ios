@@ -1,12 +1,12 @@
 PODS:
-  - Agrume (5.6.12):
+  - Agrume (5.6.13):
     - SwiftyGif
   - ArsdkEngine (1.7.1):
     - GroundSdk (= 1.7.1)
-  - DronelinkCore (2.2.0)
+  - DronelinkCore (2.2.0-beta1)
   - DronelinkCoreUI (2.1.0):
     - Agrume (~> 5.6.10)
-    - DronelinkCore
+    - DronelinkCore (~> 2.2.0-beta1)
     - IQKeyboardManager (~> 6.5.6)
     - Kingfisher (~> 5.15.7)
     - Mapbox-iOS-SDK (~> 6.3.0)
@@ -25,7 +25,7 @@ PODS:
     - SwiftyUserDefaults (~> 5.0.0)
   - DronelinkParrot (1.0.0):
     - ArsdkEngine (~> 1.7.1)
-    - DronelinkCore
+    - DronelinkCore (~> 2.2.0-beta1)
     - GroundSdk (~> 1.7.1)
     - SdkCore (~> 1.7.1)
   - GroundSdk (1.7.1):
@@ -180,7 +180,7 @@ PODS:
     - MaterialComponents/private/Math
     - MDFTextAccessibility
   - MDFInternationalization (2.0.0)
-  - MDFTextAccessibility (2.0.0)
+  - MDFTextAccessibility (2.0.1)
   - MicrosoftMapsSDK (1.1.4)
   - MotionAnimator (2.8.1):
     - MotionInterchange (~> 1.6)
@@ -191,9 +191,9 @@ PODS:
   - SwiftyUserDefaults (5.0.0)
 
 DEPENDENCIES:
-  - DronelinkCore (from `../../private/dronelink-core-ios`)
-  - DronelinkCoreUI (from `../dronelink-core-ui-ios`)
-  - DronelinkParrot (from `../dronelink-parrot-ios`)
+  - DronelinkCore (= 2.2.0-beta1)
+  - DronelinkCoreUI (from `https://github.com/dronelink/dronelink-core-ui-ios.git`, branch `core-beta`)
+  - DronelinkParrot (from `https://github.com/dronelink/dronelink-parrot-ios.git`, branch `core-beta-thermal`)
   - MaterialComponents/Palettes (~> 119.0.0)
   - SnapKit (~> 5.0.1)
   - SwiftyUserDefaults (~> 5.0.0)
@@ -202,6 +202,7 @@ SPEC REPOS:
   trunk:
     - Agrume
     - ArsdkEngine
+    - DronelinkCore
     - GroundSdk
     - IQKeyboardManager
     - Kingfisher
@@ -220,19 +221,27 @@ SPEC REPOS:
     - SwiftyUserDefaults
 
 EXTERNAL SOURCES:
-  DronelinkCore:
-    :path: "../../private/dronelink-core-ios"
   DronelinkCoreUI:
-    :path: "../dronelink-core-ui-ios"
+    :branch: core-beta
+    :git: https://github.com/dronelink/dronelink-core-ui-ios.git
   DronelinkParrot:
-    :path: "../dronelink-parrot-ios"
+    :branch: core-beta-thermal
+    :git: https://github.com/dronelink/dronelink-parrot-ios.git
+
+CHECKOUT OPTIONS:
+  DronelinkCoreUI:
+    :commit: f5c21f457cbc0e3156839ff435136038b6e68d23
+    :git: https://github.com/dronelink/dronelink-core-ui-ios.git
+  DronelinkParrot:
+    :commit: fd3b899a5ffe1918646be4e52b8384723f3c8e80
+    :git: https://github.com/dronelink/dronelink-parrot-ios.git
 
 SPEC CHECKSUMS:
-  Agrume: d60f7ead4aad9720564148f7e9cbe0b225b1d814
+  Agrume: 21b96a1138abc0f890211bfcb12f8b1e3464b4c1
   ArsdkEngine: 141abda6632f25935253d3f4d2ff5eccd92fffca
-  DronelinkCore: a6cbf596d9c2b7297a6b371681df32a6343220ea
-  DronelinkCoreUI: 8e506ff77d7c03d824fa3484ff3f3ff629014725
-  DronelinkParrot: a0781dee63f8016cde269d8a10ee3be327f78bf2
+  DronelinkCore: 328580ce1a98ae1cca486563c34b7b09f0f71c49
+  DronelinkCoreUI: 45aa6e984b5ea745ff8c7937b1d21411e7ed3008
+  DronelinkParrot: 4da849b65964bf358787574be4e9dd025d2f9672
   GroundSdk: 3b5a38e2039aaef3cd5aee22a543dfbf37376ca6
   IQKeyboardManager: 2a6e97afdafc7becf0cb17a9a8d795e3a980717f
   Kingfisher: a3c03d702433fa6cfedabb2bddbe076fb8f2e902
@@ -241,7 +250,7 @@ SPEC CHECKSUMS:
   MarqueeLabel: 00cc0bcd087111dca575878b3531af980559707d
   MaterialComponents: 69a725e28406a97816441dea4ec6ec38265a08bb
   MDFInternationalization: 010097556d6b09d2c4ea38e0820ea6d37be6a314
-  MDFTextAccessibility: 85c09a1bd9c321f494348e632a25063bcda35a53
+  MDFTextAccessibility: f4bb4cc2194286651b59a215fdeaa0e05dc90ba5
   MicrosoftMapsSDK: 64317bb343e3ef26507f61617889a6918a1b59d4
   MotionAnimator: ee16aa30567c5bae0fb2750c132915829cfaaf8a
   MotionInterchange: ead0e3ae1f3a5fb539e289debbc7ae036160a10d
@@ -250,6 +259,6 @@ SPEC CHECKSUMS:
   SwiftyGif: 5d4af95df24caf1c570dbbcb32a3b8a0763bc6d7
   SwiftyUserDefaults: 33fcb42bd1feb53a37d873feb62c82967db5f7f6
 
-PODFILE CHECKSUM: e1d20e29cff922e8189cdb9123a2502f181bd165
+PODFILE CHECKSUM: 84cb3dc559b1ef3ab7a869c6672b4102e33d04f5
 
 COCOAPODS: 1.10.1
