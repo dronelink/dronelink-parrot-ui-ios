@@ -3,9 +3,9 @@ inhibit_all_warnings!
 use_frameworks!
 
 target 'DronelinkParrotUI' do
-  pod 'DronelinkCore', :path => '../../private/dronelink-core-ios'
-  pod 'DronelinkCoreUI', :path => '../dronelink-core-ui-ios'
-  pod 'DronelinkParrot', :path => '../dronelink-parrot-ios'
+  pod 'DronelinkCore', '2.2.0-beta1'
+  pod 'DronelinkCoreUI', :git => 'https://github.com/dronelink/dronelink-core-ui-ios.git', :branch => 'core-beta'
+  pod 'DronelinkParrot', :git => 'https://github.com/dronelink/dronelink-parrot-ios.git', :branch => 'core-beta-thermal'
   pod 'SwiftyUserDefaults', '~> 5.0.0'
   pod 'SnapKit', '~> 5.0.1'
   pod 'MaterialComponents/Palettes', '~> 119.0.0'
