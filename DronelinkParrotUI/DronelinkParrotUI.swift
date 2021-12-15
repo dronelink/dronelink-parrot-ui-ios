@@ -27,14 +27,11 @@ extension ParrotDroneSessionManager: WidgetFactoryProvider {
 }
 
 open class ParrotWidgetFactory: WidgetFactory {
-    open override func createCameraFeedWidget(current: Widget? = nil, primary: Bool = true) -> Widget? {
-        guard let session = session else {
+    open override func createVideoFeedWidget(channel: UInt? = nil, current: Widget? = nil) -> Widget? {
+        if session == nil {
             return nil
         }
 
         return current is ParrotCameraFeedWidget ? current : ParrotCameraFeedWidget()
     }
-    
-    open override var cameraMenuWidgetEnabled: Bool { false }
-    open override var cameraExposureMenuWidgetEnabled: Bool { false }
 }
