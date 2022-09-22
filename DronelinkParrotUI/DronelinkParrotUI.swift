@@ -27,7 +27,7 @@ extension ParrotDroneSessionManager: WidgetFactoryProvider {
 }
 
 open class ParrotWidgetFactory: WidgetFactory {
-    open override func createVideoFeedWidget(channel: UInt? = nil, current: Widget? = nil) -> Widget? {
+    open override func createVideoFeedWidget(channel: UInt? = nil, current: Widget? = nil, overlays: Bool = true) -> Widget? {
         if session == nil {
             return nil
         }
